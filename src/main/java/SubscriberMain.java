@@ -6,13 +6,17 @@ import java.util.ArrayList;
 
 public class SubscriberMain implements MqttCallback {
 
+    private ArrayList<String> topics = new ArrayList<String>();
 
-    private String topic0 = "counter/fast/q0";
-    private String topic1 = "counter/fast/q1";
-    private String topic2 = "counter/fast/q2";
+    int qos0count;
+    int qos1count;
+    int qos2count;
+
     private MqttClient client;
 
-    public SubscriberMain() throws MqttException {
+    public SubscriberMain(ArrayList<String> topics) throws MqttException {
+
+        this.topics = topics;
 
 
         String host = String.format("tcp://%s:%d", "comp3310.ddns.net", 1883);
@@ -34,9 +38,11 @@ public class SubscriberMain implements MqttCallback {
         System.out.println("Connecting to broker: "+ host);
         this.client.connect(connectOptions);
         System.out.println("Connected");
-        this.client.subscribe(this.topic0, 0);
-        this.client.subscribe(this.topic1, 1);
-        this.client.subscribe(this.topic2, 2);
+
+        for (int i = 0; i < topics.size(); i ++){
+            this.client.subscribe(this.topics.get(i), i);
+
+        }
     }
 
 
@@ -46,6 +52,13 @@ public class SubscriberMain implements MqttCallback {
     }
 
     public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+        if (mqttMessage.getQos() == 0){
+            qos0count ++;
+        } else if (mqttMessage.getQos() == 1){
+            qos1count ++;
+        } else if (mqttMessage.getQos() == 2){
+            qos2count ++;
+        }
         System.out.println(mqttMessage.getQos() + ": " + new String(mqttMessage.getPayload()));
     }
 
@@ -54,6 +67,12 @@ public class SubscriberMain implements MqttCallback {
     }
 
     public static void main(String[] args) throws MqttException {
-        SubscriberMain subscriberMain = new SubscriberMain();
+        ArrayList<String> topics = new ArrayList<String>();
+        topics.add("counter/slow/q0");
+        topics.add("counter/slow/q1");
+        topics.add("counter/slow/q2");
+
+
+        SubscriberMain subscriberMain = new SubscriberMain(topics);
     }
 }
