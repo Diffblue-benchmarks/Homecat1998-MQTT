@@ -27,12 +27,14 @@ public class SubscriberMain implements MqttCallback {
     double qos0rate;
     double qos1rate;
     double qos2rate;
-    double qos0d;
-    double qos1d;
-    double qos2d;
-    double qos0o;
-    double qos1o;
-    double qos2o;
+    double qos0drate;
+    double qos1drate;
+    double qos2drate;
+    double qos0orate;
+    double qos1orate;
+    double qos2orate;
+
+    DecimalFormat df = new DecimalFormat("0.00000");
 
     private MqttClient client;
 
@@ -68,7 +70,7 @@ public class SubscriberMain implements MqttCallback {
     }
 
 
-    public void stop() throws MqttException {
+    private void stop() throws MqttException {
         this.client.disconnect();
         this.client.close();
     }
@@ -106,79 +108,81 @@ public class SubscriberMain implements MqttCallback {
     }
 
 
-    public boolean isNumber (String string){
+    private boolean isNumber(String string){
         Pattern pattern = Pattern.compile("[0-9]*");
         return pattern.matcher(string).matches();
     }
 
 
 
-    public void calculate(){
+    private void calculate(){
 
-        qos0d = (double)qos0dup / (double)qos0data.size();
-        qos1d = (double)qos1dup / (double)qos1data.size();
-        qos2d = (double)qos2dup / (double)qos2data.size();
+        qos0drate = (double)qos0dup / (double)qos0data.size();
+        qos1drate = (double)qos1dup / (double)qos1data.size();
+        qos2drate = (double)qos2dup / (double)qos2data.size();
 
-        System.out.println("Qos0 receive: " + qos0data.size() + ", with: " + qos0d + "% duplicate.");
-        System.out.println("Qos1 receive: " + qos1data.size() + ", with: " + qos1d + "% duplicate.");
-        System.out.println("Qos2 receive: " + qos2data.size() + ", with: " + qos2d + "% duplicate.");
 
         qos0rate = (double)1000 * qos0data.size() / (double) (qos0time.get(qos0time.size() - 1) - qos0time.get(0));
         qos1rate = (double)1000 * qos1data.size() / (double) (qos1time.get(qos1time.size() - 1) - qos1time.get(0));
         qos2rate = (double)1000 * qos2data.size() / (double) (qos2time.get(qos2time.size() - 1) - qos2time.get(0));
 
-        System.out.println("Qos0 rate: " + qos0rate);
-        System.out.println("Qos1 rate: " + qos1rate);
-        System.out.println("Qos2 rate: " + qos2rate);
 
         int last = -1;
 
-        for (int i = 0; i < qos0data.size(); i ++){
-
-            if (isNumber(qos0data.get(i))){
-                if (Integer.parseInt(qos0data.get(i)) < last){
-                    qos0ooo ++;
+        for (String qos0datum : qos0data) {
+            if (isNumber(qos0datum)) {
+                if (Integer.parseInt(qos0datum) < last) {
+                    qos0ooo++;
                 }
-                last = Integer.parseInt(qos0data.get(i));
+                last = Integer.parseInt(qos0datum);
             }
         }
 
         last = -1;
+        for (String qos1datum : qos1data) {
 
-        for (int i = 0; i < qos1data.size(); i ++){
-
-            if (isNumber(qos1data.get(i))){
-                if (Long.parseLong(qos1data.get(i)) < last){
-                    qos1ooo ++;
+            if (isNumber(qos1datum)) {
+                if (Long.parseLong(qos1datum) < last) {
+                    qos1ooo++;
                 }
-                last = Integer.parseInt(qos1data.get(i));
+                last = Integer.parseInt(qos1datum);
             }
         }
 
         last = -1;
-
-        for (int i = 0; i < qos2data.size(); i ++){
-
-            if (isNumber(qos2data.get(i))){
-                if (Long.parseLong(qos2data.get(i)) < last){
-                    qos2ooo ++;
+        for (String qos2datum : qos2data) {
+            if (isNumber(qos2datum)) {
+                if (Long.parseLong(qos2datum) < last) {
+                    qos2ooo++;
                 }
-                last = Integer.parseInt(qos2data.get(i));
+                last = Integer.parseInt(qos2datum);
             }
         }
 
-        qos0o = (double) qos0ooo / (double) qos0data.size();
-        qos1o = (double) qos1ooo / (double) qos1data.size();
-        qos2o = (double) qos2ooo / (double) qos2data.size();
-
-
-        System.out.println("Qos0 out-of-order rate: " + qos0o + "%");
-        System.out.println("Qos1 out-of-order rate: " + qos1o + "%");
-        System.out.println("Qos2 out-of-order rate: " + qos2o + "%");
-
+        qos0orate = (double) qos0ooo / (double) qos0data.size();
+        qos1orate = (double) qos1ooo / (double) qos1data.size();
+        qos2orate = (double) qos2ooo / (double) qos2data.size();
 
 
     }
+
+
+    private void print(){
+        System.out.println("Qos0 receive: " + qos0data.size() + ", with: " + df.format(qos0drate) + "% duplicate.");
+        System.out.println("Qos1 receive: " + qos1data.size() + ", with: " + df.format(qos1drate) + "% duplicate.");
+        System.out.println("Qos2 receive: " + qos2data.size() + ", with: " + df.format(qos2drate) + "% duplicate.");
+
+        System.out.println("Qos0 rate: " + df.format(qos0rate) + " per sec.");
+        System.out.println("Qos1 rate: " + df.format(qos1rate) + " per sec.");
+        System.out.println("Qos2 rate: " + df.format(qos2rate) + " per sec.");
+
+        System.out.println("Qos0 out-of-order rate: " + df.format(qos0orate) + "%");
+        System.out.println("Qos1 out-of-order rate: " + df.format(qos1orate) + "%");
+        System.out.println("Qos2 out-of-order rate: " + df.format(qos2orate) + "%");
+    }
+
+
+
 
     public static void main(String[] args) throws MqttException {
         ArrayList<String> topics = new ArrayList<String>();
@@ -197,6 +201,7 @@ public class SubscriberMain implements MqttCallback {
                 try {
                     subscriberMain.stop();
                     subscriberMain.calculate();
+                    subscriberMain.print();
                     System.exit(0);
                 } catch (MqttException e) {
                     e.printStackTrace();
